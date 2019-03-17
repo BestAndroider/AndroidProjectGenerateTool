@@ -1,0 +1,103 @@
+# @author Huxin 2019/2/2
+
+echo "create project start..."
+
+#check project name 
+#if empty
+if [ -z "$1" ];then
+echo "please input the project name,such as './bulid Test com.example '"
+echo "create project fail !"
+exit 0
+fi
+
+#if exist
+if [ -d "$1" ]; then
+echo "The project \"$1\" had exists, you must use another name"
+echo "create project fail !"
+exit 0
+fi
+
+#check project package name
+if [ -z "$2" ];then
+package="com.example.apps";
+else
+#package=$(echo $2 | tr '[A-Z]' '[a-z]' )
+package=$2
+fi
+
+
+#get lowercase project name
+var=$(echo $1 | tr '[A-Z]' '[a-z]' )
+
+package_dir=$(echo $package | sed -e 's/\./\//g' )
+
+#make project dir
+mkdir $1
+
+#into project root dir
+cd $1
+
+#init gradle
+gradle init
+
+if [ $? -eq 0 ]; then
+#back tools root dir
+    cd ..
+	fi
+
+
+#change code path
+rm -rf $1/app/src/main/java/
+mkdir -p $1/app/src/main/java/$package_dir
+
+mkdir -p $1/app/src/test/java/$package_dir
+
+mkdir -p $1/app/src/androidTest/java/$package_dir
+
+cp -r res/  $1/app/src/main/res
+
+sed -i "s/appName/$1/g" $1/app/src/main/res/values/strings.xml
+
+#into project root dir 
+cd $1
+echo "" >settings.gradle 
+ echo "include ':app'" >settings.gradle 
+cd  app
+
+mkdir libs
+
+#back project root dir
+cd ..
+cd ..
+
+file=$4
+ 
+# generate class
+class=$(echo $file | awk -F '.' '{print $1}')
+
+ 
+echo "start compile......."
+ 
+# compile java class
+javac -encoding UTF-8 -cp freemarker.jar Generate.java
+ 
+if [ $? -eq 0 ]; then
+    echo "compile success,ready run..."
+ 
+    # run
+	java -cp ".;freemarker.jar" Generate "$1" "$2"
+    if [ $? -eq 0 ]; then
+        echo "run complete!"
+    else
+        echo "run error!"
+    fi
+else
+    echo "compile error!"
+fi
+
+ rm -f Generate.class
+
+
+echo "All has been done !"
+
+
